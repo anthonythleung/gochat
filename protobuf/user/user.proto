@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package user;
+
+service User {
+  rpc CreateUser(Request) returns (Result);
+}
+
+message Request {
+  string UserName = 1;
+}
+
+message Result {
+  int64 UserID = 1;
+}

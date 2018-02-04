@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package auth;
+
+service Auth {
+  rpc CreateUser(Request) returns (Result);
+}
+
+message Request {
+  int64 UserID = 1;
+  string Password = 2;
+}
+
+message Result {
+  int64 UserID = 1;
+}
