@@ -36,12 +36,12 @@ func post(w http.ResponseWriter, r *http.Request) {
 	if userErr != nil {
 		panic(err)
 	}
-	authResult, authErr := authClient.CreateUser(context.Background(), &auth.Request{UserID: userResult.UserID, Password: password})
+	authResult, authErr := authClient.CreateUser(context.Background(), &auth.Request{UserId: userResult.UserId, Password: password})
 	if authErr != nil {
 		panic(authErr)
 	}
 
-	json.NewEncoder(w).Encode(RegisterResult{UserID: authResult.UserID})
+	json.NewEncoder(w).Encode(RegisterResult{UserID: authResult.UserId})
 }
 
 func handleUserRegister(w http.ResponseWriter, r *http.Request) {

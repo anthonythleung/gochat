@@ -37,7 +37,9 @@ services:
       - "8444:8444"
 
   user:
-    build: .
+    build:
+      context: .
+      dockerfile: ./dockerfile-user
     restart: always
     command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./user/user"
     depends_on:
@@ -45,16 +47,30 @@ services:
       - db
 
   auth:
-    build: .
+    build:
+      context: .
+      dockerfile: ./dockerfile-auth
     restart: always
     command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./auth/auth"
     depends_on:
       - db
   
   register:
-    build: .
+    build:
+      context: .
+      dockerfile: ./dockerfile-register
     restart: always
     command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./register/register"
+    depends_on:
+      - auth
+      - db
+
+  chat:
+    build:
+      context: .
+      dockerfile: ./dockerfile-chat
+    restart: always
+    command: ./chat/chat
     depends_on:
       - auth
       - db

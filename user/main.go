@@ -9,80 +9,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/AntsEclipse/gochat/auth/utils"
 	"github.com/AntsEclipse/gochat/protobuf/user"
-	"github.com/go-pg/pg"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 )
-
-var db *pg.DB
-
-// User ... The main user object
-type User struct {
-	ID        int64
-	Username  string
-	createdAt int64
-	updatedAt int64
-}
-
-func (u User) String() string {
-	return fmt.Sprintf("User<%d %s>", u.ID, u.Username)
-}
-
-func createSchema(db *pg.DB) error {
-	for _, model := range []interface{}{&User{}} {
-		err := db.CreateTable(model, nil)
-		if err != nil {
-			return nil
-		}
-	}
-	return nil
-}
-
-func getUser(id int64) User {
-	user := User{ID: id}
-	err := db.Select(&user)
-	if err != nil {
-		panic(err)
-	}
-
-	return user
-}
-
-func getUsers() []User {
-	var users []User
-	err := db.Model(&users).Select()
-	if err != nil {
-		panic(err)
-	}
-	return users
-}
-
-func createUser(username string) User {
-	newUser := &User{
-		Username: username,
-	}
-
-	err := db.Insert(newUser)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return *newUser
-}
-
-func deleteUser(id int64) {
-	user := &User{
-		ID: id,
-	}
-
-	err := db.Delete(user)
-
-	if err != nil {
-		panic(err)
-	}
-}
 
 func handleUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -130,16 +61,11 @@ type server struct{}
 // protobuf function to create a user
 func (s *server) CreateUser(ctx context.Context, req *user.Request) (*user.Result, error) {
 	newUser := createUser(req.GetUserName())
-	return &user.Result{UserID: newUser.ID}, nil
+	return &user.Result{UserId: newUser.ID}, nil
 }
 
 func main() {
-	db = pg.Connect(&pg.Options{
-		User:     "postgres",
-		Password: "password",
-		Addr:     "db:5432",
-	})
-	createSchema(db)
+	initDB()
 
 	lis, _ := net.Listen("tcp", ":50051")
 
@@ -148,6 +74,7 @@ func main() {
 	go s.Serve(lis)
 
 	router := mux.NewRouter()
+	router.Use(authUtil.ValidateTokenMiddleware)
 	router.HandleFunc("/", handleUsers).Methods("GET")
 	router.HandleFunc("/{userID}", handleUser).Methods("GET", "PUT", "DELETE")
 	log.Fatal(http.ListenAndServe(":8080", router))

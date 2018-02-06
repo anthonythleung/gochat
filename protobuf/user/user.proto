@@ -7,9 +7,9 @@ service User {
 }
 
 message Request {
-  string UserName = 1;
+  string user_name = 1;
 }
 
 message Result {
-  int64 UserID = 1;
+  int64 user_id = 1;
 }

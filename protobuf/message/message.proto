@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package message;
+
+message Message {
+  int64 user_id = 1;
+  string message = 2;
+  int64 timestamp = 3;
+}
