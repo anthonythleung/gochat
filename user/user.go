@@ -41,6 +41,18 @@ func getUser(id int64) User {
 	return user
 }
 
+func findUser(username string) User {
+	var user User
+	err := db.Model(&user).
+		Where("username = ?", username).
+		Limit(1).
+		Select()
+	if err != nil {
+		panic(err)
+	}
+	return user
+}
+
 func createUser(username string) User {
 	newUser := &User{
 		Username: username,

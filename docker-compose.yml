@@ -65,6 +65,17 @@ services:
       - auth
       - db
 
+  login:
+    build:
+      context: .
+      dockerfile: ./dockerfile-login
+    restart: always
+    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./login/login"
+    depends_on:
+      - auth
+      - user
+      - db
+
   chat:
     build:
       context: .

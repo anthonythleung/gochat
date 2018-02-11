@@ -64,6 +64,11 @@ func (s *server) CreateUser(ctx context.Context, req *user.Request) (*user.Resul
 	return &user.Result{UserId: newUser.ID}, nil
 }
 
+func (s *server) GetUserID(ctx context.Context, req *user.Request) (*user.Result, error) {
+	result := findUser(req.GetUserName())
+	return &user.Result{UserId: result.ID}, nil
+}
+
 func main() {
 	initDB()
 

@@ -4,6 +4,7 @@ package auth;
 
 service Auth {
   rpc CreateUser(Request) returns (Result);
+  rpc GetToken(Request) returns (Token);
 }
 
 message Request {
@@ -13,4 +14,8 @@ message Request {
 
 message Result {
   int64 user_id = 1;
+}
+
+message Token {
+  string token = 1;
 }

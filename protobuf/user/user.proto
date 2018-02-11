@@ -4,6 +4,7 @@ package user;
 
 service User {
   rpc CreateUser(Request) returns (Result);
+  rpc GetUserID(Request) returns (Result);
 }
 
 message Request {

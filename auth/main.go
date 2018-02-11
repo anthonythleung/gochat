@@ -41,6 +41,11 @@ func (s *server) CreateUser(ctx context.Context, req *auth.Request) (*auth.Resul
 	return &auth.Result{UserId: newUser.UserID}, nil
 }
 
+func (s *server) GetToken(ctx context.Context, req *auth.Request) (*auth.Token, error) {
+	newToken := requestJWT(req.GetUserId(), req.GetPassword())
+	return &auth.Token{Token: newToken.Token}, nil
+}
+
 func main() {
 	initDB()
 	initKeys()
