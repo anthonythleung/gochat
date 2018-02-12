@@ -1,13 +1,17 @@
 package main
 
-import "github.com/go-pg/pg"
+import (
+	"log"
+	"time"
+
+	"github.com/go-pg/pg"
+)
 
 // User ... The main user object
 type User struct {
-	ID        int64
-	Username  string
-	createdAt int64
-	updatedAt int64
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email" sql:",unique"`
 }
 
 var db *pg.DB
@@ -18,6 +22,13 @@ func initDB() {
 		Password: "password",
 		Addr:     "db:5432",
 	})
+	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
+		query, err := event.FormattedQuery()
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("%s %s", time.Since(event.StartTime), query)
+	})
 	createSchema(db)
 }
 
@@ -25,65 +36,62 @@ func createSchema(db *pg.DB) error {
 	for _, model := range []interface{}{&User{}} {
 		err := db.CreateTable(model, nil)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 	return nil
 }
 
-func getUser(id int64) User {
+func getUser(id int64) (User, error) {
 	user := User{ID: id}
 	err := db.Select(&user)
-	if err != nil {
-		panic(err)
-	}
 
-	return user
+	return user, err
 }
 
-func findUser(username string) User {
+func findUser(email string) (User, error) {
 	var user User
 	err := db.Model(&user).
-		Where("username = ?", username).
+		Where("email = ?", email).
 		Limit(1).
 		Select()
-	if err != nil {
-		panic(err)
-	}
-	return user
+	return user, err
 }
 
-func createUser(username string) User {
+func createUser(email string) (User, error) {
 	newUser := &User{
-		Username: username,
+		Email:    email,
+		Username: email,
 	}
 
 	err := db.Insert(newUser)
 
-	if err != nil {
-		panic(err)
-	}
-
-	return *newUser
+	return *newUser, err
 }
 
-func deleteUser(id int64) {
+func updateUser(user User) (User, error) {
+	_, err := db.Model(&user).
+		Column("username").
+		Returning("email").
+		Update()
+	return user, err
+}
+
+func deleteUser(id int64) error {
 	user := &User{
 		ID: id,
 	}
 
 	err := db.Delete(user)
 
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
-func getUsers() []User {
+func getUsers(user User) ([]User, error) {
 	var users []User
-	err := db.Model(&users).Select()
-	if err != nil {
-		panic(err)
-	}
-	return users
+	err := db.Model(&users).
+		Where("?0 = '' or email = ?0", user.Email).
+		Where("?0 = '' or username = ?0", user.Username).
+		Select()
+	return users, err
 }

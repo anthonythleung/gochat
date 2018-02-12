@@ -24,21 +24,34 @@ type RegisterResult struct {
 	UserID int64 `json:"userid"`
 }
 
+/**
+ * @api {post} /register Request User information
+ * @apiName post
+ * @apiGroup Register
+ *
+ * @apiParam {string} email Users email.
+ * @apiParam {string} password Users password.
+ *
+ * @apiSuccess {String} userid ID of the User.
+ */
+
 func post(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(100)
 	if err != nil {
 		panic(err)
 	}
-	username := r.PostFormValue("username")
+	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
 
-	userResult, userErr := userClient.CreateUser(context.Background(), &user.Request{UserName: username})
+	userResult, userErr := userClient.CreateUser(context.Background(), &user.Request{Email: email})
 	if userErr != nil {
-		panic(err)
+		http.Error(w, userErr.Error(), http.StatusBadRequest)
+		return
 	}
 	authResult, authErr := authClient.CreateUser(context.Background(), &auth.Request{UserId: userResult.UserId, Password: password})
 	if authErr != nil {
-		panic(authErr)
+		http.Error(w, authErr.Error(), http.StatusBadRequest)
+		return
 	}
 
 	json.NewEncoder(w).Encode(RegisterResult{UserID: authResult.UserId})

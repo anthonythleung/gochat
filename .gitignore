@@ -5,6 +5,7 @@
 *.rsa.pub
 data
 kong
+doc
 
 ### Code ###
 # Visual Studio Code - https://code.visualstudio.com/

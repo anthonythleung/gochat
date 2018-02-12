@@ -26,22 +26,37 @@ type LoginResult struct {
 	Token  string `json:"token"`
 }
 
+/**
+ *
+ * @api {post} /login Users login
+ * @apiName post
+ * @apiGroup Login
+ *
+ * @apiParam  {String} email A users email.
+ * @apiParam  {String} password A users password.
+ *
+ * @apiSuccess  {number} userid A users unique id.
+ * @apiSuccess  {string} token A users jwt token.
+ */
+
 func post(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(100)
 	if err != nil {
 		panic(err)
 	}
 
-	username := r.PostFormValue("username")
+	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
 
-	userResult, err := userClient.GetUserID(context.Background(), &user.Request{UserName: username})
+	userResult, err := userClient.GetUserID(context.Background(), &user.Request{Email: email})
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	authResult, err := authClient.GetToken(context.Background(), &auth.Request{UserId: userResult.UserId, Password: password})
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	json.NewEncoder(w).Encode(LoginResult{UserID: userResult.UserId, Token: authResult.Token})

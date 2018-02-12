@@ -13,6 +13,17 @@ import (
 	"google.golang.org/grpc"
 )
 
+/**
+ *
+ * @api {get} /auth/:userID Get a users jwt token
+ * @apiName get
+ * @apiGroup Auth
+ *
+ * @apiParam  {number} userID A users unique ID.
+ *
+ * @apiSuccess {string} token A users JWT token
+ */
+
 func get(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(100)
 	if err != nil {
@@ -20,7 +31,8 @@ func get(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, err := strconv.ParseInt(r.PostFormValue("userID"), 10, 64)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	password := r.PostFormValue("password")
 	token := requestJWT(userID, password)
