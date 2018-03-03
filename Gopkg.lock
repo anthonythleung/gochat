@@ -11,6 +11,15 @@
   version = "v3.1.0"
 
 [[projects]]
+  name = "github.com/garyburd/redigo"
+  packages = [
+    "internal",
+    "redis"
+  ]
+  revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
+  version = "v1.6.0"
+
+[[projects]]
   name = "github.com/go-pg/pg"
   packages = [
     ".",
@@ -58,6 +67,12 @@
   name = "github.com/jinzhu/inflection"
   packages = ["."]
   revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nu7hatch/gouuid"
+  packages = ["."]
+  revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
   branch = "master"
@@ -141,6 +156,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d34daeac5b821a88aca00af74e3a615bd85bb684e44fb7bb95fc9066e16ea447"
+  inputs-digest = "e91cfec33ea939ba39ece8a26c8850c052292ddf1681f9fc56fe7897e44d3817"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -11,12 +11,13 @@ import (
 
 const publicKeyPath = "/go/src/github.com/AntsEclipse/gochat/auth/gochat.rsa.pub"
 
+var verifyBytes []byte
+var initialized = false
+
 // ValidateTokenMiddleware ... Valide Token Middleware for Protected API
 func ValidateTokenMiddleware(next http.Handler) http.Handler {
-
-	verifyBytes, err := ioutil.ReadFile(publicKeyPath)
-	if err != nil {
-		panic(err)
+	if !initialized {
+		verifyBytes, _ = ioutil.ReadFile(publicKeyPath)
 	}
 
 	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)

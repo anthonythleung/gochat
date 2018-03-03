@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package chat;
+
+service Chat {
+  rpc CreateServer(Request) returns (Result);
+}
+
+message Request {
+  string channel_id = 1;
+}
+
+message Result {
+  string channel_id = 1;
+}

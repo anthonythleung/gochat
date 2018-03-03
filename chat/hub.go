@@ -2,14 +2,16 @@ package main
 
 // Hub ... WebSocket Hub
 type Hub struct {
+	id         string
 	clients    map[*Client]bool
 	messages   chan []byte
 	register   chan *Client
 	unregister chan *Client
 }
 
-func newHub() *Hub {
+func newHub(id string) *Hub {
 	return &Hub{
+		id:         id,
 		messages:   make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
