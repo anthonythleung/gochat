@@ -1,5 +1,23 @@
 version: "3"
 services:
+  portainer:
+    image: portainer/portainer
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - ./portainer:/data
+    ports:
+        - "9000:9000"
+
+  reverse-proxy:
+    image: traefik
+    command: --api 
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik:/etc/traefik
+
   db:
     image: postgres
     environment:
@@ -9,32 +27,6 @@ services:
       - ./data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-  
-
-  cassandra:
-    image: cassandra
-    volumes:
-      - ./kong:/var/lib/cassandra
-
-  kong:
-    image: kong
-    restart: always
-    environment:
-      KONG_DATABASE: cassandra
-      KONG_CASSANDRA_CONTACT_POINTS: cassandra
-      cassandra_port: 9042
-      KONG_CASSANDRA_PORT: 9042
-      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
-    depends_on:
-      - cassandra
-    volumes:
-      - ./scripts:/usr/scripts
-    command: bash -c "chmod +x /usr/scripts/wait.sh && ./usr/scripts/wait.sh cassandra:9042 -t 0 -- kong migrations up && ./usr/scripts/wait.sh cassandra:9042 -t 0 -- kong start"
-    ports:
-      - "8001:8001"
-      - "8000:8000"
-      - "8443:8443"
-      - "8444:8444"
 
   user:
     build:
@@ -45,6 +37,12 @@ services:
     depends_on:
       - auth
       - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=PathPrefixStrip:/user"
+      - "traefik.backend=user"
+      - "traefik.port=8080"
+      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 
   auth:
     build:
@@ -54,6 +52,12 @@ services:
     command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./auth/auth"
     depends_on:
       - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=PathPrefixStrip:/auth"
+      - "traefik.backend=auth"
+      - "traefik.port=8080"
+      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
   
   register:
     build:
@@ -64,6 +68,12 @@ services:
     depends_on:
       - auth
       - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=PathPrefixStrip:/register"
+      - "traefik.backend=register"
+      - "traefik.port=8080"
+      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 
   login:
     build:
@@ -75,10 +85,25 @@ services:
       - auth
       - user
       - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=PathPrefixStrip:/login"
+      - "traefik.backend=login"
+      - "traefik.port=8080"
+      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
   
   chat-redis:
     image: redis
     restart: always
+    ports:
+      - "6380:6379"
+
+  chat-cassandra1:
+    image: cassandra
+    volumes:
+      - ./chatdata/c1:/var/lib/cassandra
+    ports:
+      - "9042:9042"
 
   chat:
     build:
@@ -89,6 +114,12 @@ services:
     depends_on:
       - auth
       - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=PathPrefixStrip:/chat"
+      - "traefik.backend=chat"
+      - "traefik.port=8080"
+      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 
   channels:
     build:
@@ -99,3 +130,10 @@ services:
     depends_on:
       - auth
       - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=PathPrefixStrip:/channels"
+      - "traefik.backend=channels"
+      - "traefik.port=8080"
+      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
+
