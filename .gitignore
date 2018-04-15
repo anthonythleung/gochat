@@ -3,9 +3,10 @@
 
 *.rsa
 *.rsa.pub
+chatdata
 data
-kong
 doc
+portainer
 
 ### Code ###
 # Visual Studio Code - https://code.visualstudio.com/
