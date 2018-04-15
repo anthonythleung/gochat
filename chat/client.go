@@ -1,12 +1,14 @@
 package main
 
 import (
-	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 const (
@@ -22,6 +24,8 @@ const (
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
+
+	hub *Hub
 )
 
 var upgrader = websocket.Upgrader{
@@ -41,6 +45,15 @@ type Client struct {
 	send chan []byte
 }
 
+// Message ... a message sent or received by a client
+type Message struct {
+	Type      string `json:"type"`
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	Message   string `json:"message"`
+	Timestamp string `json:"timestamp"`
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -58,11 +71,22 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				log.Printf("error: %v\n", err)
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		// parse the message here
+		var parsedMessage Message
+		err = json.Unmarshal(message, &parsedMessage)
+		UUID, _ := uuid.NewV4()
+		messageID := UUID.String()
+		fmt.Printf("Inserting Message: %s", parsedMessage.Message)
+		err = hub.session.Query(`INSERT INTO messages (channel_id, message_id, created_at, author_id, content, type) VALUES (?, ?, ?, ?, ?, ?)`,
+			hub.id, messageID, time.Now(), parsedMessage.ID, parsedMessage.Message, parsedMessage.Type).Exec()
+		if err != nil {
+			fmt.Printf("Error Inserting into Cassandra: %s\n", err)
+		}
 		c.hub.messages <- message
 	}
 }
@@ -114,7 +138,8 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func serveWs(newhub *Hub, w http.ResponseWriter, r *http.Request) {
+	hub = newhub
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)

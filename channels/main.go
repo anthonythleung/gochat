@@ -123,6 +123,7 @@ func connect(w http.ResponseWriter, r *http.Request) {
 func main() {
 	chatClient = chat.NewChatClient(dial("chat:50051"))
 	redisClient, err = redis.Dial("tcp", "chat-redis:6379")
+	redisClient.Do("FLUSHDB")
 	if err != nil {
 		panic(err)
 	}

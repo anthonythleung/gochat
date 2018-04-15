@@ -24,7 +24,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	uuid := params["channelID"]
 	fmt.Printf("Connecting: %s\n", uuid)
-	fmt.Printf("ID: %s", strconv.Itoa(uuids[uuid]))
+	fmt.Printf("ID: %s\n", strconv.Itoa(uuids[uuid]))
 	serveWs(hubs[uuids[uuid]], w, r)
 }
 
@@ -33,7 +33,7 @@ func createServer(uuid string) {
 	uuids[uuid] = count
 	hubs[count] = hub
 	count = count + 1
-	log.Printf("Creating New Chat Server: %s", strconv.Itoa(count))
+	log.Printf("Creating New Chat Server: %s\n", strconv.Itoa(count))
 	go hub.run()
 }
 

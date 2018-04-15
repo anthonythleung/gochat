@@ -68,3 +68,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/nu7hatch/gouuid"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gocql/gocql"
