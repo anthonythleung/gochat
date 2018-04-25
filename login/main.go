@@ -10,6 +10,7 @@ import (
 
 	"github.com/AntsEclipse/gochat/protobuf/auth"
 	"github.com/AntsEclipse/gochat/protobuf/user"
+	"github.com/AntsEclipse/gochat/utils"
 	"google.golang.org/grpc"
 )
 
@@ -70,18 +71,10 @@ func handleUserRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	userClient = user.NewUserClient(dial("user:50051"))
-	authClient = auth.NewAuthClient(dial("auth:50051"))
+	userClient = user.NewUserClient(helpers.Dial("user:50051"))
+	authClient = auth.NewAuthClient(helpers.Dial("auth:50051"))
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", handleUserRegister).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8080", router))
-}
-
-func dial(addr string) *grpc.ClientConn {
-	conn, err = grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	return conn
 }

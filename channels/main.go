@@ -8,6 +8,7 @@ import (
 
 	"github.com/AntsEclipse/gochat/auth/utils"
 	"github.com/AntsEclipse/gochat/protobuf/chat"
+	"github.com/AntsEclipse/gochat/utils"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	uuid "github.com/nu7hatch/gouuid"
@@ -121,7 +122,7 @@ func connect(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	chatClient = chat.NewChatClient(dial("chat:50051"))
+	chatClient = chat.NewChatClient(helpers.Dial("chat:50051"))
 	redisClient, err = redis.Dial("tcp", "chat-redis:6379")
 	redisClient.Do("FLUSHDB")
 	if err != nil {
@@ -134,12 +135,4 @@ func main() {
 	router.HandleFunc("/{channelID}", handleChannel)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
-}
-
-func dial(addr string) *grpc.ClientConn {
-	conn, err = grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	return conn
 }
