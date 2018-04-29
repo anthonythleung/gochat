@@ -98,6 +98,12 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
+  name = "github.com/rs/cors"
+  packages = ["."]
+  revision = "feef513b9575b32f84bafa580aad89b011259019"
+  version = "v1.3.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
@@ -185,6 +191,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3e87341ef62b2dea27ca826b6ed1fdae583c2030ceec7b18112295c7d078e971"
+  inputs-digest = "2af0cd8804fef90e48e31bdee52de195d6d6e74ac33b6473fb28afb9b631249b"
   solver-name = "gps-cdcl"
   solver-version = 1

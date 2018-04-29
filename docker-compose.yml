@@ -42,7 +42,6 @@ services:
       - "traefik.frontend.rule=PathPrefixStrip:/user"
       - "traefik.backend=user"
       - "traefik.port=8080"
-      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 
   auth:
     build:
@@ -57,7 +56,6 @@ services:
       - "traefik.frontend.rule=PathPrefixStrip:/auth"
       - "traefik.backend=auth"
       - "traefik.port=8080"
-      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
   
   register:
     build:
@@ -73,7 +71,6 @@ services:
       - "traefik.frontend.rule=PathPrefixStrip:/register"
       - "traefik.backend=register"
       - "traefik.port=8080"
-      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 
   login:
     build:
@@ -90,7 +87,6 @@ services:
       - "traefik.frontend.rule=PathPrefixStrip:/login"
       - "traefik.backend=login"
       - "traefik.port=8080"
-      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
   
   chat-redis:
     image: redis
@@ -119,7 +115,6 @@ services:
       - "traefik.frontend.rule=PathPrefixStrip:/chat"
       - "traefik.backend=chat"
       - "traefik.port=8080"
-      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 
   channels:
     build:
@@ -135,5 +130,4 @@ services:
       - "traefik.frontend.rule=PathPrefixStrip:/channels"
       - "traefik.backend=channels"
       - "traefik.port=8080"
-      - "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*"
 

@@ -134,5 +134,5 @@ func main() {
 	router.HandleFunc("/", handleChannels)
 	router.HandleFunc("/{channelID}", handleChannel)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", helpers.CorsHandler(router)))
 }

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/AntsEclipse/gochat/protobuf/auth"
+	"github.com/AntsEclipse/gochat/utils"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 )
@@ -70,5 +71,6 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", handleAuth).Methods("GET", "POST")
-	log.Fatal(http.ListenAndServe(":8080", router))
+
+	log.Fatal(http.ListenAndServe(":8080", helpers.CorsHandler(router)))
 }

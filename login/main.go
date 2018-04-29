@@ -76,5 +76,6 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", handleUserRegister).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8080", router))
+
+	log.Fatal(http.ListenAndServe(":8080", helpers.CorsHandler(router)))
 }

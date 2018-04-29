@@ -11,6 +11,7 @@ import (
 
 	"github.com/AntsEclipse/gochat/auth/utils"
 	"github.com/AntsEclipse/gochat/protobuf/user"
+	"github.com/AntsEclipse/gochat/utils"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 )
@@ -147,5 +148,5 @@ func main() {
 	router.HandleFunc("/", handleUsers).Methods("GET")
 	router.HandleFunc("/{userID}", handleUser).Methods("GET", "PUT", "DELETE")
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", helpers.CorsHandler(router)))
 }
