@@ -27,7 +27,7 @@ func newHub(id string) *Hub {
 func (h *Hub) run() {
 	// Setup Cassandra
 	cluster := gocql.NewCluster("chat-cassandra1")
-	cluster.Keyspace = "chat_log"
+	cluster.Keyspace = "gochat"
 	cluster.Consistency = gocql.One
 	session, err := cluster.CreateSession()
 	if err != nil {

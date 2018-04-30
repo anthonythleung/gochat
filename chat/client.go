@@ -47,11 +47,10 @@ type Client struct {
 
 // Message ... a message sent or received by a client
 type Message struct {
-	Type      string `json:"type"`
-	ID        int64  `json:"id"`
-	Username  string `json:"username"`
-	Message   string `json:"message"`
-	Timestamp string `json:"timestamp"`
+	Type     string `json:"type"`
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Message  string `json:"message"`
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -75,8 +74,6 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		// parse the message here
 		var parsedMessage Message
 		err = json.Unmarshal(message, &parsedMessage)
 		UUID, _ := uuid.NewV4()

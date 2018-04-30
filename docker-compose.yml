@@ -98,8 +98,15 @@ services:
     image: cassandra
     volumes:
       - ./chatdata/c1:/var/lib/cassandra
+      - ./chat/schema:/schemas
     ports:
       - "9042:9042"
+
+  # chat-elasticsearch:
+    # image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    # ports:
+     # - "9200:9200"
+    # restart: always
 
   chat:
     build:
@@ -121,7 +128,7 @@ services:
       context: .
       dockerfile: ./dockerfile-channels
     restart: always
-    command: ./channels/channels
+    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh chat-cassandra1:9042 -t 0 -- ./channels/channels"
     depends_on:
       - auth
       - db
