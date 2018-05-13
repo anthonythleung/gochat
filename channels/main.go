@@ -16,6 +16,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
 	uuid "github.com/nu7hatch/gouuid"
+	"github.com/olivere/elastic"
 	"google.golang.org/grpc"
 )
 
@@ -25,6 +26,7 @@ var (
 	chatClient       chat.ChatClient
 	redisClient      redis.Conn
 	cassandraSession *gocql.Session
+	elasticClient    *elastic.Client
 )
 
 // Channel ... a channel lol
@@ -33,6 +35,7 @@ type Channel struct {
 	Name string `json:"name"`
 }
 
+// Message ... a message
 type Message struct {
 	Type      string `json:"type"`
 	ID        int64  `json:"id"`
@@ -136,7 +139,7 @@ func history(w http.ResponseWriter, r *http.Request) {
 
 	iter := cassandraSession.Query(`select * from messages where channel_id = ? and type = 'MESSAGE' limit 100`, channelID).Iter()
 	fmt.Println("got " + strconv.Itoa(iter.NumRows()))
-	var results []Message
+	results := []Message{}
 	m := map[string]interface{}{}
 
 	for iter.MapScan(m) {
@@ -151,6 +154,55 @@ func history(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(results)
+}
+
+func handleChannelSearch(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		search(w, r)
+	}
+}
+
+func search(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("New Query")
+	// params := mux.Vars(r)
+	// channelID := params["channelID"]
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	message := r.FormValue("message")
+	query := elastic.NewFuzzyQuery("message", message)
+	searchResult, err := elasticClient.Search().
+		Index("messages").
+		Query(query).
+		From(0).Size(10).
+		Pretty(true).
+		Do(context.Background())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
+	fmt.Printf("Found a total of %d tweets\n", searchResult.TotalHits())
+	results := []Message{}
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+
+			var m Message
+			err := json.Unmarshal(*hit.Source, &m)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			results = append(results, m)
+		}
+	} else {
+		fmt.Print("Found no message\n")
+	}
+	json.NewEncoder(w).Encode(results)
+
 }
 
 func main() {
@@ -169,11 +221,31 @@ func main() {
 	}
 	defer cassandraSession.Close()
 
+	// Setup ElasticSearch
+	elasticClient, err = elastic.NewClient(
+		elastic.SetURL("http://chat-elasticsearch:9200"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	exists, err := elasticClient.IndexExists("messages").Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	if !exists {
+		_, err := elasticClient.CreateIndex("messages").Do(context.Background())
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	router := mux.NewRouter()
 	router.Use(authUtil.ValidateTokenMiddleware)
 	router.HandleFunc("/", handleChannels)
 	router.HandleFunc("/{channelID}", handleChannel)
 	router.HandleFunc("/{channelID}/history", handleChannelHistory).Methods("GET")
+	router.HandleFunc("/{channelID}/search", handleChannelSearch).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", helpers.CorsHandler(router)))
 }

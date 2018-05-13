@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gocql/gocql"
+	"github.com/olivere/elastic"
 )
 
 // Hub ... WebSocket Hub
@@ -10,6 +11,7 @@ type Hub struct {
 	clients    map[*Client]bool
 	messages   chan []byte
 	session    *gocql.Session
+	elastic    *elastic.Client
 	register   chan *Client
 	unregister chan *Client
 }
@@ -35,6 +37,16 @@ func (h *Hub) run() {
 	}
 	defer session.Close()
 	h.session = session
+
+	// Setup ElasticSearch
+	client, err := elastic.NewClient(
+		elastic.SetURL("http://chat-elasticsearch:9200"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	h.elastic = client
 
 	for {
 		select {

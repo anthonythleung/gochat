@@ -93,9 +93,36 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    ".",
+    "buffer",
+    "jlexer",
+    "jwriter"
+  ]
+  revision = "8b799c424f57fa123fc63a99d6383bc6e4c02578"
+
+[[projects]]
+  branch = "master"
   name = "github.com/nu7hatch/gouuid"
   packages = ["."]
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+
+[[projects]]
+  name = "github.com/olivere/elastic"
+  packages = [
+    ".",
+    "config",
+    "uritemplates"
+  ]
+  revision = "80585846d765de967183044c2840d4ed5e93f9e4"
+  version = "v6.1.16"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -191,6 +218,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2af0cd8804fef90e48e31bdee52de195d6d6e74ac33b6473fb28afb9b631249b"
+  inputs-digest = "731df21465418b9e92cecc34cae2b8ecf9f46575bfa3c4ba92d7b4ae85f058ae"
   solver-name = "gps-cdcl"
   solver-version = 1

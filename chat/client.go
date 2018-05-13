@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -78,13 +79,26 @@ func (c *Client) readPump() {
 		err = json.Unmarshal(message, &parsedMessage)
 		UUID, _ := uuid.NewV4()
 		messageID := UUID.String()
-		fmt.Printf("Inserting Message: %s", parsedMessage.Message)
+
+		c.hub.messages <- message
+
+		// Add message to cassandra log
 		err = hub.session.Query(`INSERT INTO messages (channel_id, message_id, created_at, author_id, content, type) VALUES (?, ?, ?, ?, ?, ?)`,
 			hub.id, messageID, time.Now(), parsedMessage.ID, parsedMessage.Message, parsedMessage.Type).Exec()
 		if err != nil {
 			fmt.Printf("Error Inserting into Cassandra: %s\n", err)
 		}
-		c.hub.messages <- message
+
+		// Add message to elastic search
+		result, err := hub.elastic.Index().
+			Index("messages").
+			Type("message").
+			Id(messageID).
+			BodyJson(parsedMessage).
+			Refresh("wait_for").
+			Do(context.Background())
+
+		fmt.Printf("Indexed tweet %s to index %s, type %s\n", result.Id, result.Index, result.Type)
 	}
 }
 
