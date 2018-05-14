@@ -1,5 +1,10 @@
-FROM golang:1.10.2
+FROM golang:1.10.2-alpine
 COPY . /go/src/github.com/AntsEclipse/gochat
 WORKDIR /go/src/github.com/AntsEclipse/gochat
 
 RUN cd login && go build .
+
+FROM alpine:3.7 
+COPY --from=0 /go/src/github.com/AntsEclipse/gochat/auth/gochat.rsa.pub /auth/gochat.rsa.pub
+COPY --from=0 /go/src/github.com/AntsEclipse/gochat/login /login
+CMD ["./login/login"]

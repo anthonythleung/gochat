@@ -206,6 +206,9 @@ func search(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	helpers.Wait("chat-redis:6379")
+	helpers.Wait("chat-cassandra1:9042")
+
 	chatClient = chat.NewChatClient(helpers.Dial("chat:50051"))
 	redisClient, err = redis.Dial("tcp", "chat-redis:6379")
 	redisClient.Do("FLUSHDB")
@@ -241,7 +244,7 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	router.Use(authUtil.ValidateTokenMiddleware)
+	router.Use(authutil.ValidateTokenMiddleware)
 	router.HandleFunc("/", handleChannels)
 	router.HandleFunc("/{channelID}", handleChannel)
 	router.HandleFunc("/{channelID}/history", handleChannelHistory).Methods("GET")

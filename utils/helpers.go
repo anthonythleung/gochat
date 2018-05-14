@@ -1,9 +1,13 @@
 package helpers
 
 import (
+	"fmt"
+	"net"
+	"net/http"
+	"time"
+
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
-	"net/http"
 )
 
 // Dial ... connect to grpc
@@ -26,4 +30,18 @@ func CorsHandler(router http.Handler) http.Handler {
 	})
 
 	return c.Handler(router)
+}
+
+// Wait ... Wait for a port to be avilable
+func Wait(addr string) {
+	for {
+		conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+		if err == nil {
+			conn.Close()
+			fmt.Printf("%s is now avilable\n", addr)
+			return
+		}
+		fmt.Printf("waiting for %s ...\n", addr)
+		time.Sleep(5 * time.Second)
+	}
 }

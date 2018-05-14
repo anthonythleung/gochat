@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	privateKeyPath = "/go/src/github.com/AntsEclipse/gochat/auth/gochat.rsa"
-	publicKeyPath  = "/go/src/github.com/AntsEclipse/gochat/auth/gochat.rsa.pub"
+	privateKeyPath = "/auth/gochat.rsa"
+	publicKeyPath  = "/auth/gochat.rsa.pub"
 )
 
 var (

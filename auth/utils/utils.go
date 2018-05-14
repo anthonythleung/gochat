@@ -1,4 +1,4 @@
-package authUtil
+package authutil
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go/request"
 )
 
-const publicKeyPath = "/go/src/github.com/AntsEclipse/gochat/auth/gochat.rsa.pub"
+const publicKeyPath = "/auth/gochat.rsa.pub"
 
 var verifyBytes []byte
 var initialized = false

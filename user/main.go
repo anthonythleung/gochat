@@ -144,7 +144,7 @@ func main() {
 	go s.Serve(lis)
 
 	router := mux.NewRouter()
-	router.Use(authUtil.ValidateTokenMiddleware)
+	router.Use(authutil.ValidateTokenMiddleware)
 	router.HandleFunc("/", handleUsers).Methods("GET")
 	router.HandleFunc("/{userID}", handleUser).Methods("GET", "PUT", "DELETE")
 

@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/AntsEclipse/gochat/utils"
 	"github.com/go-pg/pg"
 )
 
@@ -17,6 +18,7 @@ type User struct {
 var db *pg.DB
 
 func initDB() {
+	helpers.Wait("db:5432")
 	db = pg.Connect(&pg.Options{
 		User:     "postgres",
 		Password: "password",

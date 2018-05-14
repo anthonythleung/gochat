@@ -17,6 +17,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik:/etc/traefik
+      - ./logs:/logs
 
   db:
     image: postgres
@@ -33,10 +34,6 @@ services:
       context: .
       dockerfile: ./dockerfile-user
     restart: always
-    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./user/user"
-    depends_on:
-      - auth
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/user"
@@ -48,9 +45,6 @@ services:
       context: .
       dockerfile: ./dockerfile-auth
     restart: always
-    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./auth/auth"
-    depends_on:
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/auth"
@@ -62,10 +56,6 @@ services:
       context: .
       dockerfile: ./dockerfile-register
     restart: always
-    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./register/register"
-    depends_on:
-      - auth
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/register"
@@ -77,11 +67,6 @@ services:
       context: .
       dockerfile: ./dockerfile-login
     restart: always
-    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh db:5432 -t 0 -- ./login/login"
-    depends_on:
-      - auth
-      - user
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/login"
@@ -111,10 +96,6 @@ services:
       context: .
       dockerfile: ./dockerfile-chat
     restart: always
-    command: ./chat/chat
-    depends_on:
-      - auth
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/chat"
@@ -126,10 +107,6 @@ services:
       context: .
       dockerfile: ./dockerfile-channels
     restart: always
-    command: bash -c "chmod +x ./scripts/wait.sh && ./scripts/wait.sh chat-cassandra1:9042 -t 0 -- ./channels/channels"
-    depends_on:
-      - auth
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/channels"
