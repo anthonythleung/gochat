@@ -2,11 +2,12 @@ package orm
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
-func Insert(db DB, v ...interface{}) error {
-	_, err := NewQuery(db, v...).Insert()
+func Insert(db DB, model ...interface{}) error {
+	_, err := NewQuery(db, model...).Insert()
 	return err
 }
 
@@ -32,7 +33,7 @@ func (q insertQuery) AppendQuery(b []byte) ([]byte, error) {
 		return nil, q.q.stickyErr
 	}
 	if q.q.model == nil {
-		return nil, errors.New("pg: Model is nil")
+		return nil, errors.New("pg: Model(nil)")
 	}
 
 	table := q.q.model.Table()
@@ -72,13 +73,14 @@ func (q insertQuery) AppendQuery(b []byte) ([]byte, error) {
 		}
 
 		b = append(b, " ("...)
-		b = appendColumns(b, fields)
+		b = appendColumns(b, "", fields)
 		b = append(b, ") VALUES ("...)
 		if value.Kind() == reflect.Struct {
 			b = q.appendValues(b, fields, value)
 		} else {
 			if value.Len() == 0 {
-				return nil, errors.New("pg: can't bulk-insert empty slice")
+				err = fmt.Errorf("pg: can't bulk-insert empty slice %s", value.Type())
+				return nil, err
 			}
 
 			for i := 0; i < value.Len(); i++ {
@@ -105,6 +107,7 @@ func (q insertQuery) AppendQuery(b []byte) ([]byte, error) {
 			}
 
 			if len(q.q.updWhere) > 0 {
+				b = append(b, " WHERE "...)
 				b = q.q.appendUpdWhere(b)
 			}
 		}
@@ -124,6 +127,13 @@ func (q *insertQuery) appendValues(b []byte, fields []*Field, v reflect.Value) [
 		if i > 0 {
 			b = append(b, ", "...)
 		}
+
+		app, ok := q.q.values[f.SQLName]
+		if ok {
+			b = app.AppendFormat(b, q.q)
+			continue
+		}
+
 		if f.OmitZero(v) {
 			b = append(b, "DEFAULT"...)
 			q.addReturningField(f)
@@ -145,6 +155,6 @@ func (ins *insertQuery) addReturningField(field *Field) {
 
 func (insertQuery) appendReturningFields(b []byte, fields []*Field) []byte {
 	b = append(b, " RETURNING "...)
-	b = appendColumns(b, fields)
+	b = appendColumns(b, "", fields)
 	return b
 }

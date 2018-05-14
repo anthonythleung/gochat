@@ -50,12 +50,12 @@ func (m *m2mModel) NewModel() ColumnScanner {
 }
 
 func (m *m2mModel) AddModel(model ColumnScanner) error {
-	m.buf = modelIdMap(m.buf[:0], m.columns, m.rel.BasePrefix, m.baseTable.PKs)
+	m.buf = modelIdMap(m.buf[:0], m.columns, m.rel.BaseFKs)
 	dstValues, ok := m.dstValues[string(m.buf)]
 	if !ok {
 		return fmt.Errorf(
-			"pg: relation=%q has no base model=%q with id=%q (check join conditions)",
-			m.rel.Field.GoName, m.baseTable.TypeName, m.buf)
+			"pg: relation=%q has no base %s with id=%q (check join conditions)",
+			m.rel.Field.GoName, m.baseTable, m.buf)
 	}
 
 	for _, v := range dstValues {
@@ -67,6 +67,16 @@ func (m *m2mModel) AddModel(model ColumnScanner) error {
 	}
 
 	return nil
+}
+
+func modelIdMap(b []byte, m map[string]string, columns []string) []byte {
+	for i, col := range columns {
+		if i > 0 {
+			b = append(b, ',')
+		}
+		b = append(b, m[col]...)
+	}
+	return b
 }
 
 func (m *m2mModel) AfterQuery(db DB) error {

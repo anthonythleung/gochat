@@ -1,6 +1,8 @@
 package orm
 
 import (
+	"reflect"
+
 	"github.com/go-pg/pg/internal"
 	"github.com/go-pg/pg/types"
 )
@@ -55,18 +57,23 @@ func (j *join) manyQuery(db DB) (*Query, error) {
 
 	baseTable := j.BaseModel.Table()
 	var where []byte
-	where = append(where, "("...)
-	where = columns(where, j.JoinModel.Table().Alias, "", j.Rel.FKs)
-	where = append(where, ") IN ("...)
+	if len(j.Rel.FKs) > 1 {
+		where = append(where, '(')
+	}
+	where = appendColumns(where, j.JoinModel.Table().Alias, j.Rel.FKs)
+	if len(j.Rel.FKs) > 1 {
+		where = append(where, '(')
+	}
+	where = append(where, " IN ("...)
 	where = appendChildValues(
-		where, j.JoinModel.Root(), j.JoinModel.ParentIndex(), baseTable.PKs)
+		where, j.JoinModel.Root(), j.JoinModel.ParentIndex(), j.Rel.FKValues)
 	where = append(where, ")"...)
 	q = q.Where(internal.BytesToString(where))
 
-	if j.Rel.Polymorphic {
+	if j.Rel.Polymorphic != nil {
 		q = q.Where(
 			`? IN (?, ?)`,
-			types.F(j.Rel.BasePrefix+"type"),
+			j.Rel.Polymorphic.Column,
 			baseTable.ModelName, baseTable.TypeName,
 		)
 	}
@@ -114,18 +121,29 @@ func (j *join) m2mQuery(db DB) (*Query, error) {
 	join = append(join, " AS "...)
 	join = append(join, j.Rel.M2MTableAlias...)
 	join = append(join, " ON ("...)
-	join = columns(join, j.Rel.M2MTableAlias, j.Rel.BasePrefix, baseTable.PKs)
+	for i, col := range j.Rel.BaseFKs {
+		if i > 0 {
+			join = append(join, ", "...)
+		}
+		join = append(join, j.Rel.M2MTableAlias...)
+		join = append(join, '.')
+		join = types.AppendField(join, col, 1)
+	}
 	join = append(join, ") IN ("...)
 	join = appendChildValues(join, j.BaseModel.Root(), index, baseTable.PKs)
 	join = append(join, ")"...)
 	q = q.Join(internal.BytesToString(join))
 
-	joinAlias := j.JoinModel.Table().Alias
-	for _, pk := range j.JoinModel.Table().PKs {
+	joinTable := j.JoinModel.Table()
+	for i, col := range j.Rel.JoinFKs {
+		if i >= len(joinTable.PKs) {
+			break
+		}
+		pk := joinTable.PKs[i]
 		q = q.Where(
 			"?.? = ?.?",
-			joinAlias, pk.Column,
-			j.Rel.M2MTableAlias, types.F(j.Rel.JoinPrefix+pk.SQLName),
+			joinTable.Alias, pk.Column,
+			j.Rel.M2MTableAlias, types.F(col),
 		)
 	}
 
@@ -277,5 +295,36 @@ func (q hasManyColumnsAppender) AppendFormat(b []byte, f QueryFormatter) []byte 
 		return b
 	}
 
-	return appendTableColumns(b, joinTable)
+	return appendColumns(b, joinTable.Alias, joinTable.Fields)
+}
+
+func appendChildValues(b []byte, v reflect.Value, index []int, fields []*Field) []byte {
+	seen := make(map[string]struct{})
+	walk(v, index, func(v reflect.Value) {
+		start := len(b)
+
+		if len(fields) > 1 {
+			b = append(b, '(')
+		}
+		for i, f := range fields {
+			if i > 0 {
+				b = append(b, ", "...)
+			}
+			b = f.AppendValue(b, v, 1)
+		}
+		if len(fields) > 1 {
+			b = append(b, ')')
+		}
+		b = append(b, ", "...)
+
+		if _, ok := seen[string(b[start:])]; ok {
+			b = b[:start]
+		} else {
+			seen[string(b[start:])] = struct{}{}
+		}
+	})
+	if len(seen) > 0 {
+		b = b[:len(b)-2] // trim ", "
+	}
+	return b
 }

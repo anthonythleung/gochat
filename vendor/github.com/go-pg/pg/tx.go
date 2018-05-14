@@ -75,12 +75,12 @@ func (tx *Tx) Begin() (*Tx, error) {
 func (tx *Tx) RunInTransaction(fn func(*Tx) error) error {
 	defer func() {
 		if err := recover(); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			panic(err)
 		}
 	}()
 	if err := fn(tx); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 	return tx.Commit()
@@ -230,8 +230,8 @@ func (tx *Tx) Insert(model ...interface{}) error {
 }
 
 // Update is an alias for DB.Update.
-func (tx *Tx) Update(model ...interface{}) error {
-	return orm.Update(tx, model...)
+func (tx *Tx) Update(model interface{}) error {
+	return orm.Update(tx, model)
 }
 
 // Delete is an alias for DB.Delete.
@@ -313,9 +313,9 @@ func (tx *Tx) Rollback() error {
 	return err
 }
 
-func (tx *Tx) close(lastErr error) error {
+func (tx *Tx) close(lastErr error) {
 	if tx.cn == nil {
-		return errTxDone
+		return
 	}
 
 	for _, stmt := range tx.stmts {
@@ -323,10 +323,8 @@ func (tx *Tx) close(lastErr error) error {
 	}
 	tx.stmts = nil
 
-	err := tx.db.freeConn(tx.cn, lastErr)
+	tx.db.freeConn(tx.cn, lastErr)
 	tx.cn = nil
-
-	return err
 }
 
 func (tx *Tx) Context() context.Context {

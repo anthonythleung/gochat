@@ -64,13 +64,23 @@ func (q selectQuery) AppendQuery(b []byte) ([]byte, error) {
 		b = j.appendHasOneJoin(q.q.db, b)
 	})
 	if len(q.q.joins) > 0 {
-		for _, f := range q.q.joins {
+		for _, j := range q.q.joins {
 			b = append(b, ' ')
-			b = f.AppendFormat(b, q.q)
+			b = j.join.AppendFormat(b, q.q)
+			if len(j.on) > 0 {
+				b = append(b, " ON "...)
+			}
+			for i, on := range j.on {
+				if i > 0 {
+					b = on.AppendSep(b)
+				}
+				b = on.AppendFormat(b, q.q)
+			}
 		}
 	}
 
 	if len(q.q.where) > 0 {
+		b = append(b, " WHERE "...)
 		b = q.q.appendWhere(b)
 	}
 
@@ -136,7 +146,8 @@ func (q selectQuery) appendColumns(b []byte) []byte {
 	if q.q.columns != nil {
 		b = q.q.appendColumns(b)
 	} else if q.q.hasModel() {
-		b = appendTableColumns(b, q.q.model.Table())
+		table := q.q.model.Table()
+		b = appendColumns(b, table.Alias, table.Fields)
 	} else {
 		b = append(b, '*')
 	}
@@ -159,7 +170,7 @@ func (q selectQuery) appendColumns(b []byte) []byte {
 
 func (q selectQuery) isDistinct() bool {
 	for _, column := range q.q.columns {
-		column, ok := column.(queryParamsAppender)
+		column, ok := column.(*queryParamsAppender)
 		if ok {
 			if strings.Contains(column.query, "DISTINCT") ||
 				strings.Contains(column.query, "distinct") {

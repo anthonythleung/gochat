@@ -151,11 +151,12 @@ func (db *DB) initConn(cn *pool.Conn) error {
 	return nil
 }
 
-func (db *DB) freeConn(cn *pool.Conn, err error) error {
+func (db *DB) freeConn(cn *pool.Conn, err error) {
 	if !isBadConn(err, false) {
-		return db.pool.Put(cn)
+		db.pool.Put(cn)
+	} else {
+		db.pool.Remove(cn)
 	}
-	return db.pool.Remove(cn)
 }
 
 func (db *DB) shouldRetry(err error) bool {
@@ -383,8 +384,8 @@ func (db *DB) Insert(model ...interface{}) error {
 }
 
 // Update updates the model by primary key.
-func (db *DB) Update(model ...interface{}) error {
-	return orm.Update(db, model...)
+func (db *DB) Update(model interface{}) error {
+	return orm.Update(db, model)
 }
 
 // Delete deletes the model by primary key.

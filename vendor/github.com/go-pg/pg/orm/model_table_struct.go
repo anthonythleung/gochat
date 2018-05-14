@@ -59,8 +59,11 @@ func (m *structTableModel) AppendParam(b []byte, f QueryFormatter, name string) 
 	case "TableAlias":
 		b = append(b, m.table.Alias...)
 		return b, true
+	case "TableColumns":
+		b = appendColumns(b, m.table.Alias, m.table.Fields)
+		return b, true
 	case "Columns":
-		b = appendTableColumns(b, m.table)
+		b = appendColumns(b, "", m.table.Fields)
 		return b, true
 	}
 
@@ -77,6 +80,10 @@ func (m *structTableModel) Index() []int {
 
 func (m *structTableModel) ParentIndex() []int {
 	return m.index[:len(m.index)-len(m.rel.Field.Index)]
+}
+
+func (m *structTableModel) Kind() reflect.Kind {
+	return reflect.Struct
 }
 
 func (m *structTableModel) Value() reflect.Value {

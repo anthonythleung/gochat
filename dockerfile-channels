@@ -1,4 +1,4 @@
-FROM golang:1.9.2
+FROM golang:1.10.2
 COPY . /go/src/github.com/AntsEclipse/gochat
 WORKDIR /go/src/github.com/AntsEclipse/gochat
 

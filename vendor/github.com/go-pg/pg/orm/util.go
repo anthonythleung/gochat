@@ -55,21 +55,6 @@ func indirectNew(v reflect.Value) reflect.Value {
 	return v
 }
 
-func columns(b []byte, table types.Q, prefix string, fields []*Field) []byte {
-	for i, f := range fields {
-		if i > 0 {
-			b = append(b, ", "...)
-		}
-
-		if len(table) > 0 {
-			b = append(b, table...)
-			b = append(b, '.')
-		}
-		b = types.AppendField(b, prefix+f.SQLName, 1)
-	}
-	return b
-}
-
 func walk(v reflect.Value, index []int, fn func(reflect.Value)) {
 	v = reflect.Indirect(v)
 	switch v.Kind() {
@@ -95,32 +80,6 @@ func visitField(v reflect.Value, index []int, fn func(reflect.Value)) {
 	}
 }
 
-func appendChildValues(b []byte, v reflect.Value, index []int, fields []*Field) []byte {
-	seen := make(map[string]struct{})
-	walk(v, index, func(v reflect.Value) {
-		start := len(b)
-
-		b = append(b, '(')
-		for i, f := range fields {
-			if i > 0 {
-				b = append(b, ", "...)
-			}
-			b = f.AppendValue(b, v, 1)
-		}
-		b = append(b, "), "...)
-
-		if _, ok := seen[string(b[start:])]; ok {
-			b = b[:start]
-		} else {
-			seen[string(b[start:])] = struct{}{}
-		}
-	})
-	if len(seen) > 0 {
-		b = b[:len(b)-2] // trim ", "
-	}
-	return b
-}
-
 func dstValues(model tableModel, fields []*Field) map[string][]reflect.Value {
 	mp := make(map[string][]reflect.Value)
 	var id []byte
@@ -141,34 +100,17 @@ func modelId(b []byte, v reflect.Value, fields []*Field) []byte {
 	return b
 }
 
-func modelIdMap(b []byte, m map[string]string, prefix string, fields []*Field) []byte {
-	for i, f := range fields {
-		if i > 0 {
-			b = append(b, ',')
-		}
-		b = append(b, m[prefix+f.SQLName]...)
-	}
-	return b
-}
-
-func appendColumns(b []byte, fields []*Field) []byte {
+func appendColumns(b []byte, table types.Q, fields []*Field) []byte {
 	for i, f := range fields {
 		if i > 0 {
 			b = append(b, ", "...)
 		}
-		b = append(b, f.Column...)
-	}
-	return b
-}
 
-func appendTableColumns(b []byte, table *Table) []byte {
-	for i, f := range table.Fields {
-		if i > 0 {
-			b = append(b, ", "...)
+		if len(table) > 0 {
+			b = append(b, table...)
+			b = append(b, '.')
 		}
-		b = append(b, table.Alias...)
-		b = append(b, '.')
-		b = append(b, f.Column...)
+		b = types.AppendField(b, f.SQLName, 1)
 	}
 	return b
 }
