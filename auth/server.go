@@ -23,7 +23,11 @@ type server struct {
 }
 
 func main() {
-	d := dao{}
+	logger := helpers.Logger("auth")
+
+	d := dao{
+		log: logger,
+	}
 	d.initDB()
 
 	c := crypto{}
@@ -33,7 +37,7 @@ func main() {
 		dao:    &d,
 		crypto: &c,
 		router: mux.NewRouter(),
-		log:    helpers.Logger("auth"),
+		log:    logger,
 	}
 	s.routes()
 

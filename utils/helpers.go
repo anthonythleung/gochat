@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-pg/pg"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -77,4 +78,21 @@ func Logger(name string) *logrus.Entry {
 	})
 
 	return contextLogger
+}
+
+// QueryLogger ... A query logger for postgres
+type QueryLogger func(*pg.QueryProcessedEvent)
+
+// CreateQueryLogger ... Create a new query logger for pg
+func CreateQueryLogger(logger *logrus.Entry) QueryLogger {
+	return func(event *pg.QueryProcessedEvent) {
+		query, err := event.FormattedQuery()
+		if err != nil {
+			panic(err)
+		}
+		logger.WithFields(logrus.Fields{
+			"took":  time.Since(event.StartTime),
+			"query": query,
+		}).Info("Executed Query")
+	}
 }

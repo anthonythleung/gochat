@@ -1,15 +1,15 @@
 package main
 
 import (
-	"log"
-	"time"
+	"github.com/sirupsen/logrus"
 
 	"github.com/AntsEclipse/gochat/utils"
 	"github.com/go-pg/pg"
 )
 
 type dao struct {
-	db *pg.DB
+	db  *pg.DB
+	log *logrus.Entry
 }
 
 // User ... The main user object
@@ -27,13 +27,7 @@ func (d *dao) initDB() {
 		Password: "password",
 		Addr:     "db:5432",
 	})
-	d.db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
-		query, err := event.FormattedQuery()
-		if err != nil {
-			panic(err)
-		}
-		log.Printf("%s %s", time.Since(event.StartTime), query)
-	})
+	d.db.OnQueryProcessed(helpers.CreateQueryLogger(d.log))
 	d.createSchema()
 }
 

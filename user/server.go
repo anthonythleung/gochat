@@ -19,11 +19,14 @@ type server struct {
 }
 
 func main() {
-	d := dao{}
+	logger := helpers.Logger("user")
+	d := dao{
+		log: logger,
+	}
 	d.initDB()
 
 	s := server{
-		log:    helpers.Logger("user"),
+		log:    logger,
 		router: mux.NewRouter(),
 		dao:    &d,
 	}
