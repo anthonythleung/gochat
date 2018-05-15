@@ -17,7 +17,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik:/etc/traefik
-      - ./logs:/logs
+      - ./logs/traefik:/logs
 
   db:
     image: postgres
@@ -34,6 +34,8 @@ services:
       context: .
       dockerfile: ./dockerfile-user
     restart: always
+    volumes:
+      - ./logs/user:/logs
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/user"
@@ -45,6 +47,8 @@ services:
       context: .
       dockerfile: ./dockerfile-auth
     restart: always
+    volumes:
+      - ./logs/auth:/logs
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/auth"
@@ -56,6 +60,8 @@ services:
       context: .
       dockerfile: ./dockerfile-register
     restart: always
+    volumes:
+      - ./logs/register:/logs
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/register"
@@ -67,6 +73,8 @@ services:
       context: .
       dockerfile: ./dockerfile-login
     restart: always
+    volumes:
+      - ./logs/login:/logs
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/login"
@@ -96,6 +104,8 @@ services:
       context: .
       dockerfile: ./dockerfile-chat
     restart: always
+    volumes:
+      - ./logs/chat:/logs
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/chat"
@@ -107,6 +117,8 @@ services:
       context: .
       dockerfile: ./dockerfile-channels
     restart: always
+    volumes:
+      - ./logs/channels:/logs
     labels:
       - "traefik.enable=true"
       - "traefik.frontend.rule=PathPrefixStrip:/channels"

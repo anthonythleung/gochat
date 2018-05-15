@@ -1,12 +1,13 @@
 package helpers
 
 import (
-	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -33,15 +34,47 @@ func CorsHandler(router http.Handler) http.Handler {
 }
 
 // Wait ... Wait for a port to be avilable
-func Wait(addr string) {
+func Wait(addr string, log *logrus.Entry) {
+	start := time.Now()
+	retries := 0
 	for {
 		conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 		if err == nil {
 			conn.Close()
-			fmt.Printf("%s is now avilable\n", addr)
+			log.WithFields(logrus.Fields{
+				"waiting": addr,
+				"status":  "avilable",
+				"took":    time.Since(start),
+				"retries": retries,
+			}).Info("Service is now avilable")
 			return
 		}
-		fmt.Printf("waiting for %s ...\n", addr)
+		retries = retries + 1
+		log.WithFields(logrus.Fields{
+			"waiting": addr,
+			"status":  "waiting",
+			"retries": retries,
+		}).Info("Waiting for service")
 		time.Sleep(5 * time.Second)
 	}
+}
+
+// Logger ... Return a new configurated logrus logger
+func Logger(name string) *logrus.Entry {
+	log := logrus.New()
+
+	log.SetLevel(logrus.InfoLevel)
+
+	file, err := os.OpenFile("/logs/"+name+".log", os.O_CREATE|os.O_WRONLY, 0666)
+	if err == nil {
+		log.Out = file
+	} else {
+		log.Info("Failed to log to file, using default stderr")
+	}
+
+	contextLogger := log.WithFields(logrus.Fields{
+		"service": name,
+	})
+
+	return contextLogger
 }

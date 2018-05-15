@@ -98,7 +98,7 @@ func (c *Client) readPump() {
 			Refresh("wait_for").
 			Do(context.Background())
 
-		fmt.Printf("Indexed tweet %s to index %s, type %s\n", result.Id, result.Index, result.Type)
+		fmt.Printf("Indexed message %s to index %s, type %s\n", result.Id, result.Index, result.Type)
 	}
 }
 
