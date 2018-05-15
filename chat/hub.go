@@ -1,8 +1,11 @@
 package main
 
 import (
+	"time"
+
 	"github.com/gocql/gocql"
 	"github.com/olivere/elastic"
+	"github.com/sirupsen/logrus"
 )
 
 // Hub ... WebSocket Hub
@@ -14,19 +17,25 @@ type Hub struct {
 	elastic    *elastic.Client
 	register   chan *Client
 	unregister chan *Client
+	log        *logrus.Entry
 }
 
-func newHub(id string) *Hub {
+func newHub(id string, logger *logrus.Entry) *Hub {
 	return &Hub{
 		id:         id,
 		messages:   make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		log:        logger,
 	}
 }
 
 func (h *Hub) run() {
+	start := time.Now()
+	h.log.WithFields(logrus.Fields{
+		"id": h.id,
+	}).Info("Starting Hub")
 	// Setup Cassandra
 	cluster := gocql.NewCluster("chat-cassandra1")
 	cluster.Keyspace = "gochat"
@@ -47,6 +56,11 @@ func (h *Hub) run() {
 	}
 
 	h.elastic = client
+
+	h.log.WithFields(logrus.Fields{
+		"id":   h.id,
+		"took": time.Since(start),
+	}).Info("Hub Ready")
 
 	for {
 		select {

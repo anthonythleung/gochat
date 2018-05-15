@@ -1,7 +1,6 @@
 package authutil
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -31,16 +30,10 @@ func ValidateTokenMiddleware(next http.Handler) http.Handler {
 				return verifyKey, nil
 			})
 
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized Access")
+		if err != nil || !token.Valid {
+			http.Error(w, "Unauthorized Access", http.StatusUnauthorized)
 		} else {
-			if token.Valid {
-				next.ServeHTTP(w, r)
-			} else {
-				w.WriteHeader(http.StatusUnauthorized)
-				fmt.Fprintf(w, "Unauthorized Access")
-			}
+			next.ServeHTTP(w, r)
 		}
 	})
 }

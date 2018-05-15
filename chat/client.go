@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
 	uuid "github.com/nu7hatch/gouuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -25,8 +25,6 @@ const (
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
-
-	hub *Hub
 )
 
 var upgrader = websocket.Upgrader{
@@ -71,7 +69,10 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v\n", err)
+				c.hub.log.WithFields(logrus.Fields{
+					"error": err,
+					"hubID": c.hub.id,
+				}).Error("Websocket Closed Unexpectedly")
 			}
 			break
 		}
@@ -83,14 +84,18 @@ func (c *Client) readPump() {
 		c.hub.messages <- message
 
 		// Add message to cassandra log
-		err = hub.session.Query(`INSERT INTO messages (channel_id, message_id, created_at, author_id, content, type) VALUES (?, ?, ?, ?, ?, ?)`,
-			hub.id, messageID, time.Now(), parsedMessage.ID, parsedMessage.Message, parsedMessage.Type).Exec()
+		err = c.hub.session.Query(`INSERT INTO messages (channel_id, message_id, created_at, author_id, content, type) VALUES (?, ?, ?, ?, ?, ?)`,
+			c.hub.id, messageID, time.Now(), parsedMessage.ID, parsedMessage.Message, parsedMessage.Type).Exec()
 		if err != nil {
-			fmt.Printf("Error Inserting into Cassandra: %s\n", err)
+			c.hub.log.WithFields(logrus.Fields{
+				"error":     err,
+				"messageID": messageID,
+				"hubID":     c.hub.id,
+			}).Error("Error inserting message into cassandra")
 		}
 
 		// Add message to elastic search
-		result, err := hub.elastic.Index().
+		result, err := c.hub.elastic.Index().
 			Index("messages").
 			Type("message").
 			Id(messageID).
@@ -98,7 +103,19 @@ func (c *Client) readPump() {
 			Refresh("wait_for").
 			Do(context.Background())
 
-		fmt.Printf("Indexed message %s to index %s, type %s\n", result.Id, result.Index, result.Type)
+		if err != nil {
+			c.hub.log.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("Error inserting message to elasticsearch")
+		} else {
+
+			c.hub.log.WithFields(logrus.Fields{
+				"resultID":    result.Id,
+				"resultIndex": result.Index,
+				"resultType":  result.Type,
+			}).Info("Indexed message to elasticsearch")
+		}
+
 	}
 }
 
@@ -150,13 +167,12 @@ func (c *Client) writePump() {
 
 // serveWs handles websocket requests from the peer.
 func serveWs(newhub *Hub, w http.ResponseWriter, r *http.Request) {
-	hub = newhub
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{hub: newhub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

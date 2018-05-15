@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -97,10 +96,8 @@ func (s *server) handleChannelHistory() http.HandlerFunc {
 			params := mux.Vars(r)
 			channelID := params["channelID"]
 
-			query := fmt.Sprintf("select * from messages where channel_id = '%s' and type = 'MESSAGE' limit 100", channelID)
-			iter := s.cassandraSession.Query(query).Iter()
+			iter := s.cassandraSession.Query(`select * from messages where channel_id = ? and type = 'MESSAGE' limit 100`, channelID).Iter()
 			s.log.WithFields(logrus.Fields{
-				"query":   query,
 				"count":   iter.NumRows(),
 				"channel": channelID,
 			}).Info("Executed Channel History Query")
