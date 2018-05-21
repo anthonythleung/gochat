@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"strconv"
 
 	"github.com/AntsEclipse/gochat/protobuf/chat"
@@ -15,7 +14,7 @@ func (s *server) CreateServer(ctx context.Context, req *chat.Request) (*chat.Res
 	s.uuids[uuid] = s.count
 	s.hubs[s.count] = hub
 	s.count = s.count + 1
-	log.Printf("Creating New Chat Server: %s\n", strconv.Itoa(s.count))
+	s.log.Printf("Creating New Chat Server: %s\n", strconv.Itoa(s.count))
 	go hub.run()
 	return &chat.Result{ChannelId: req.GetChannelId()}, nil
 }

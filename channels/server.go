@@ -47,7 +47,6 @@ func main() {
 
 	// Setup Redis
 	redisClient, err := redis.Dial("tcp", "chat-redis:6379")
-	redisClient.Do("FLUSHDB")
 	if err != nil {
 		panic(err)
 	}

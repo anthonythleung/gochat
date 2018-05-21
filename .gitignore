@@ -3,11 +3,12 @@
 
 *.rsa
 *.rsa.pub
-chatdata
-data
-doc
-portainer
-logs
+chatdata/
+data/
+doc/
+portainer/
+logs/
+redis/
 
 ### Code ###
 # Visual Studio Code - https://code.visualstudio.com/
